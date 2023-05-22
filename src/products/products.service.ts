@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -20,6 +20,7 @@ export class ProductsService {
   async create(createProductDto: CreateProductDto) {
     
     try {
+
       const product = this.productRepository.create(createProductDto)
       await this.productRepository.save(product) //Se usa para guardar el producto en la base de datos
 
@@ -31,20 +32,28 @@ export class ProductsService {
       
   }
 
+  //TODO: paginar
   findAll() {
-    return `This action returns all products`;
+    return this.productRepository.find() //Se usa para obtener todos los productos de la base de datos
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} product`;
+  async findOne(id: string) {
+    const product = await this.productRepository.findOneBy({id}) 
+    
+    if (!product)
+      throw new NotFoundException(`El producto con id ${id} no existe`)
+
+    return product
+
   }
 
   update(id: number, updateProductDto: UpdateProductDto) {
     return `This action updates a #${id} product`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} product`;
+  async remove(id: string) {
+    const product = await this.findOne(id)
+    await this.productRepository.remove(product)
   }
 
   private handleDbException(error: any){ //Se crea un método privado para manejar los errores de la base de datos y no tener que duplicar el código en cada método
