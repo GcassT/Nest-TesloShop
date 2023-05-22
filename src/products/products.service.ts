@@ -4,6 +4,8 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
 import { Repository } from 'typeorm';
+import { PaginationDto } from '../common/dtos/pagination.dto';
+import {validate as IsUUID} from 'uuid'
 
 @Injectable()
 export class ProductsService {
@@ -13,7 +15,7 @@ export class ProductsService {
   //Constructor de la clase para inyectar el repositorio de la entidad Product
   constructor(
     @InjectRepository(Product) 
-    private readonly productRepository: Repository<Product>,//Se usa para inyectar el repositorio de la entidad Product
+    private readonly productRepository: Repository<Product>,// inyectar el repositorio de la entidad Product
   ) {}
   
   //Métodos de la clase
@@ -22,7 +24,7 @@ export class ProductsService {
     try {
 
       const product = this.productRepository.create(createProductDto)
-      await this.productRepository.save(product) //Se usa para guardar el producto en la base de datos
+      await this.productRepository.save(product) //guardar el producto en la base de datos
 
       return product
 
@@ -32,13 +34,35 @@ export class ProductsService {
       
   }
 
-  //TODO: paginar
-  findAll() {
-    return this.productRepository.find() //Se usa para obtener todos los productos de la base de datos
+  
+  findAll(PaginationDto: PaginationDto) {
+
+    const {limit = 10, offset = 0} = PaginationDto
+
+    return this.productRepository.find({
+      take: limit,//obtener los primeros 10 productos
+      skip: offset//saltar los primeros 10 productos
+      //TODO: Relaciones
+
+    }) //obtener todos los productos de la base de datos
   }
 
   async findOne(id: string) {
-    const product = await this.productRepository.findOneBy({id}) 
+    
+    let product: Product;
+    
+    if ( IsUUID(id) ) {// validar si el id es de tipo UUID
+      product = await this.productRepository.findOneBy({id: id}) //obtener el producto por id
+    } else {
+      const queryBuilder = this.productRepository.createQueryBuilder();//Se crea un query builder para crear una consulta personalizada a la base de datos
+      product = await queryBuilder
+      .where('UPPER(Product.title) = UPPER(:title) OR Product.slug = LOWER(:slug)', {// title o slug son los campos de la tabla, se usa el operador OR para validar si el id es de tipo UUID o de tipo string
+        title: id.toUpperCase(),
+        slug: id.toLowerCase(),
+      }).getOne();// Para obtener un solo producto
+    }
+
+   
     
     if (!product)
       throw new NotFoundException(`El producto con id ${id} no existe`)
