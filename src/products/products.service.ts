@@ -23,7 +23,7 @@ export class ProductsService {
     
     try {
 
-      const product = this.productRepository.create(createProductDto)
+      const product = this.productRepository.create(createProductDto) //crear un producto en memoria
       await this.productRepository.save(product) //guardar el producto en la base de datos
 
       return product
@@ -71,8 +71,23 @@ export class ProductsService {
 
   }
 
-  update(id: number, updateProductDto: UpdateProductDto) {
-    return `This action updates a #${id} product`;
+  async update(id: string, updateProductDto: UpdateProductDto) {
+    
+    const product = await this.productRepository.preload({//Preload se usa para cargar los datos del producto en memoria
+      id: id,
+      ...updateProductDto
+    });
+    if (!product)
+      throw new NotFoundException(`El producto con id ${id} no existe`)
+    try {
+
+    await this.productRepository.save(product);
+    return product;
+
+    } catch (error) {
+      this.handleDbException(error)
+    }
+    
   }
 
   async remove(id: string) {

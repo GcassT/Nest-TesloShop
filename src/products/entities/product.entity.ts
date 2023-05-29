@@ -1,4 +1,4 @@
-import { BeforeInsert, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, BeforeUpdate, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class Product {
@@ -39,6 +39,12 @@ export class Product {
     @Column('text')
     gender: string;
 
+    @Column('text',{
+        array: true,
+        default: [],
+    })
+    tags: string[];
+
     @BeforeInsert()
     checkSlugInsert() { //Este método se ejecuta antes de insertar un producto en la base de datos
         if (!this.slug) {
@@ -49,6 +55,15 @@ export class Product {
             replaceAll(' ', '-').
             replaceAll("'", '')
         }
+    
+    @BeforeUpdate()
+    checkSlugUpdate() { //Este método se ejecuta antes de actualizar un producto en la base de datos
+            this.slug = this.slug
+            .toLowerCase().
+            replaceAll(' ', '-').
+            replaceAll("'", '')
+    }
+
 
 
 

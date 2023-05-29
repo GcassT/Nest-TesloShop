@@ -32,4 +32,10 @@ export class CreateProductDto {
     @IsIn(['men', 'women', 'unisex']) //Se usa para validar que el valor del campo sea uno de los valores definidos en el arreglo
     gender: string;
 
+    @IsString({ each: true })
+    @IsArray()
+    @IsOptional()
+    tags?: string[];
+
+
 }
