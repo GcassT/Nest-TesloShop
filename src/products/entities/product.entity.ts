@@ -1,4 +1,5 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { ProductImage } from './product-image.entity';
 
 @Entity()
 export class Product {
@@ -44,6 +45,14 @@ export class Product {
         default: [],
     })
     tags: string[];
+
+    //Images
+    @OneToMany( //Un producto puede tener muchas imágenes (OneToMany)
+        () => ProductImage,
+        productImage => productImage.product,
+        {cascade: true}//Si se elimina un producto, se eliminan todas sus imágenes
+    )
+    images?: ProductImage;
 
     @BeforeInsert()
     checkSlugInsert() { //Este método se ejecuta antes de insertar un producto en la base de datos
